@@ -9,15 +9,19 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IMemberRepository? _memberRepository;
     private IMessageRepository? _messageRepository;
     private ILikesRepository? _likesRepository;
+    private IPhotoRepository? _photoRepository;
 
-    public IMemberRepository MemberRepository => _memberRepository 
+    public IMemberRepository MemberRepository => _memberRepository
         ??= new MemberRepository(context);
 
-    public IMessageRepository MessageRepository => _messageRepository 
+    public IMessageRepository MessageRepository => _messageRepository
         ??= new MessageRepository(context);
 
-    public ILikesRepository LikesRepository => _likesRepository 
+    public ILikesRepository LikesRepository => _likesRepository
         ??= new LikesRepository(context);
+
+    public IPhotoRepository PhotoRepository => _photoRepository
+        ??= new PhotoRepository(context);
 
     public async Task<bool> Complete()
     {
@@ -27,7 +31,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
         }
         catch (DbUpdateException ex)
         {
-            throw new Exception("An error occurred while saving changes", ex);
+            throw new Exception("An error occured while saving changes", ex);
         }
     }
 

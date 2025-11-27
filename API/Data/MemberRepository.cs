@@ -15,8 +15,13 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
 
     public async Task<Member?> GetMemberForUpdate(string id)
     {
-        return await context.Members.Include(x => x.User).Include(x => x.Photos).SingleOrDefaultAsync(x => x.Id == id);
+        return await context.Members
+            .Include(x => x.User)
+            .Include(x => x.Photos)
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(x => x.Id == id);
     }
+
     public async Task<PaginatedResult<Member>> GetMembersAsync(MemberParams memberParams)
     {
         var query = context.Members.AsQueryable();
@@ -39,15 +44,19 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
             _ => query.OrderByDescending(x => x.LastActive)
         };
 
-        return await PaginationHelper.CreateAsync(query, memberParams.PageNumber, memberParams.PageSize);
+        return await PaginationHelper.CreateAsync(query,
+                memberParams.PageNumber, memberParams.PageSize);
     }
 
-    public async Task<IReadOnlyList<Photo>> GetPhotosForMemberAsync(string memberId)
+    public async Task<IReadOnlyList<Photo>> GetPhotosForMemberAsync(string memberId, bool isCurrentUser)
     {
-        return await context.Members
+        var query = context.Members
             .Where(x => x.Id == memberId)
-            .SelectMany(x => x.Photos)
-            .ToListAsync();
+            .SelectMany(x => x.Photos);
+
+        if (isCurrentUser) query = query.IgnoreQueryFilters();
+
+        return await query.ToListAsync();
     }
 
     public void Update(Member member)

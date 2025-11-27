@@ -33,7 +33,8 @@ namespace API.Controllers
         [HttpGet("{id}/photos")]
         public async Task<ActionResult<IReadOnlyList<Photo>>> GetMemberPhotos(string id)
         {
-            return Ok(await uow.MemberRepository.GetPhotosForMemberAsync(id));
+            var isCurrentUser = User.GetMemberId() == id;
+            return Ok(await uow.MemberRepository.GetPhotosForMemberAsync(id, isCurrentUser));
         }
 
         [HttpPut]
@@ -64,7 +65,7 @@ namespace API.Controllers
         {
             var member = await uow.MemberRepository.GetMemberForUpdate(User.GetMemberId());
 
-            if (member == null) return BadRequest("Could not get member");
+            if (member == null) return BadRequest("Cannot update member");
 
             var result = await photoService.UploadPhotoAsync(file);
 
@@ -74,14 +75,9 @@ namespace API.Controllers
             {
                 Url = result.SecureUrl.AbsoluteUri,
                 PublicId = result.PublicId,
-                MemberId = User.GetMemberId()
+                MemberId = User.GetMemberId(),
+                IsApproved = true
             };
-
-            if (member.ImageUrl == null)
-            {
-                member.ImageUrl = photo.Url;
-                member.User.ImageUrl = photo.Url;
-            }
 
             member.Photos.Add(photo);
 
